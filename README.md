@@ -1,9 +1,18 @@
+
+# Desarrollo Móvil - Rama Develop
 # Moviles-Javier
 
 **Estudiante:** Javier Eduardo Moran Jurado  
 **Código:** 230231043
 
 ---
+
+
+## Propósito de esta rama
+
+La rama `develop` es la rama de **integración** del repositorio. Aquí se fusionan los Pull Requests provenientes de las ramas `feature/tallerX` después de ser revisados y aprobados.
+
+Esta rama contiene la versión en desarrollo de los talleres, con los últimos cambios integrados pero aún no promocionados a `main` (versión estable).
 
 ## Descripción
 
@@ -12,3 +21,4 @@ Repositorio personal para la asignatura **Desarrollo Móvil**, donde se almacena
 Cada taller se organiza en ramas independientes siguiendo un flujo de trabajo profesional con Git: `main` para versiones estables, `dev` para integración y `feature/tallerX` para el desarrollo de cada actividad.
 
 **Cada rama de taller contiene su propio `README.md`** con la descripción detallada del taller, las capturas de pantalla de la aplicación funcionando y los pasos para ejecutarlo correctamente.
+
