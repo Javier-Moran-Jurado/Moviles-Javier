@@ -1,4 +1,9 @@
+
 # Taller 4: * Peticiones HTTP y Consumo de API Pública en Flutter
+
+
+# Desarrollo Móvil - Rama Develop
+# Moviles-Javier
 
 **Estudiante:** Javier Moran Jurado  
 **Código:** 230231043  
@@ -7,9 +12,15 @@
 
 ---
 
+
 ##  Descripción de la API y endpoints seleccionados
+=======
+
+## Propósito de esta rama
+
 
 La aplicación consume la **API Colombia** (`https://api-colombia.com/api/v1`), una API REST pública que proporciona información geográfica, cultural, histórica y turística del país.
+
 
 ### Endpoints utilizados
 
@@ -79,3 +90,14 @@ Endpoint: President (GET)
   "description": "Libertador de Colombia, Venezuela, Ecuador y Perú."
 }
 Documentación completa: Swagger API Colombia
+Esta rama contiene la versión en desarrollo de los talleres, con los últimos cambios integrados pero aún no promocionados a `main` (versión estable).
+
+## Descripción
+
+Repositorio personal para la asignatura **Desarrollo Móvil**, donde se almacenan los talleres, proyectos y ejercicios prácticos desarrollados en **Flutter** a lo largo del curso.
+
+Cada taller se organiza en ramas independientes siguiendo un flujo de trabajo profesional con Git: `main` para versiones estables, `dev` para integración y `feature/tallerX` para el desarrollo de cada actividad.
+
+**Cada rama de taller contiene su propio `README.md`** con la descripción detallada del taller, las capturas de pantalla de la aplicación funcionando y los pasos para ejecutarlo correctamente.
+
+
