@@ -1,107 +1,194 @@
-
-
-# Taller 4: * Peticiones HTTP y Consumo de API Pública en Flutter
-
-
-# Desarrollo Móvil - Rama Develop
-# Moviles-Javier
-
-# Desarrollo Móvil 
+#  Parcial 2 – Accidentes Tuluá + CRUD Establecimientos
 
 **Estudiante:** Javier Moran Jurado  
 **Código:** 230231043  
-**Repositorio:** [parcial_2_datos_abiertos](https://github.com/Javier-Moran-Jurado/parcial_2_datos_abiertos)  
-**Rama:** `feature/parcial_api_colombia`
+**Repositorio:** [parcial_2](https://github.com/Javier-Moran-Jurado/parcial_2)  
+**Rama:** `feature/parcial_flutter_final`
 
 ---
 
+##  Descripción de las APIs utilizadas
 
+### API 1 – Accidentes de Tránsito en Tuluá
 
-##  Descripción de la API y endpoints seleccionados
+- **Fuente:** Datos Abiertos Colombia
+- **URL base:** `https://www.datos.gov.co/resource/ezt8-5wyj.json`
+- **Método:** GET
+- **Parámetro:** `$limit=100000` para obtener la mayor cantidad de registros.
+- **Campos relevantes del JSON:**
 
+| Campo | Descripción |
+|-------|-------------|
+| `clase_de_accidente` | Tipo de accidente (CHOQUE, ATROPELLO, VOLCAMIENTO, etc.) |
+| `gravedad_del_accidente` | Con muertos, con heridos, solo daños |
+| `barrio_hecho` | Barrio donde ocurrió el accidente |
+| `dia` | Día de la semana |
+| `hora` | Hora del accidente |
+| `area` | Urbana o rural |
+| `clase_de_vehiculo` | Tipo de vehículo involucrado |
 
-## Propósito de esta rama
+### API 2 – Establecimientos (Parqueadero)
 
+- **Fuente:** API REST propia del sistema de parqueadero
+- **URL base:** `https://parking.visiontic.com.co/api`
+- **Documentación:** Swagger
+- **Endpoints utilizados:**
 
-La aplicación consume la **API Colombia** (`https://api-colombia.com/api/v1`), una API REST pública que proporciona información geográfica, cultural, histórica y turística del país.
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/establecimientos` | Listar todos los establecimientos |
+| GET | `/establecimientos/{id}` | Obtener un establecimiento por ID |
+| POST | `/establecimientos` | Crear un nuevo establecimiento (multipart/form-data) |
+| POST | `/establecimientos/{id}` | Actualizar un establecimiento (con `_method=PUT`) |
+| DELETE | `/establecimientos/{id}` | Eliminar un establecimiento |
 
+- **Campos del JSON:**
 
-### Endpoints utilizados
+```json
+{
+  "id": 1,
+  "nombre": "Parqueadero Centro",
+  "nit": "900123456-7",
+  "direccion": "Calle 10 # 5-20",
+  "telefono": "3101234567",
+  "logo": "storage/logo.png"
+}
+```
 
-| Endpoint | Recurso | Descripción |
-|----------|---------|-------------|
-| `President` | Presidentes de Colombia | Nombre, partido político, período y descripción. |
-| `NaturalArea` | Áreas naturales protegidas | Nombre, área terrestre (hectáreas), ID del departamento, códigos DANE, etc. |
-| `TypicalDish` | Platos típicos | Nombre, descripción, ingredientes y departamento. |
-| `Airport` | Aeropuertos | Nombre, código IATA, tipo, ciudad, departamento, coordenadas. |
+---
 
-> **Nota:** La API no proporciona un campo `description` para el endpoint `NaturalArea`. Por ello, en el detalle se muestran los campos disponibles reales.
+##  Asincronía: Future/async/await vs Isolate
+
+### ¿Cuándo usar cada uno?
+
+| Mecanismo | Cuándo usarlo |
+|-----------|---------------|
+| **Future / async / await** | Para operaciones de E/S (red, base de datos, archivos) que no consumen mucha CPU. No bloquean la UI porque el tiempo de espera lo gestiona el sistema. |
+| **Isolate (o compute)** | Para tareas intensivas en CPU (procesar miles de registros, cálculos complejos). Ejecutan código en un hilo separado, evitando que la UI se congele. |
+
+### ¿Por qué se eligió `compute` para el procesamiento estadístico?
+
+La API de accidentes devuelve hasta **100,000 registros**. Procesar esa cantidad de datos en el hilo principal causaría saltos de frames y una interfaz congelada. Se requiere un **Isolate** para mover esa carga a un segundo plano.
+
+Inicialmente se intentó usar `Isolate.run()` (disponible en Dart 2.19+), pero se presentaron errores de tipo `Illegal argument in isolate message`. Por compatibilidad y simplicidad, se optó por **`compute`** (de `package:flutter/foundation.dart`), que es un wrapper de `Isolate` más fácil de usar y compatible con versiones anteriores de Flutter.
+
+La función `calcularEstadisticas()` se ejecuta en un isolate separado y devuelve un `Map<String, dynamic>` con las cuatro estadísticas necesarias para las gráficas. En consola se imprimen los tiempos de ejecución:
+
+```
+[Isolate] Iniciado — 50000 registros recibidos
+[Isolate] Completado en 234 ms
+```
 
 ---
 
 ##  Arquitectura y estructura del proyecto
+
+El proyecto sigue una **arquitectura por capas** para separar responsabilidades:
+
+```
 lib/
 ├── config/
-│ └── app_router.dart # Rutas con go_router
+│   └── app_router.dart          # Rutas con go_router
+├── models/
+│   ├── accidente.dart           # Modelo de accidente
+│   └── establecimiento.dart     # Modelo de establecimiento
 ├── services/
-│ └── api_service.dart # Cliente HTTP (consumo de endpoints)
+│   ├── accidentes_service.dart  # Cliente HTTP para accidentes
+│   ├── establecimientos_service.dart # Cliente HTTP para establecimientos
+│   └── isolate_helper.dart      # Función de procesamiento estadístico
+├── utils/
+│   └── url_helper.dart          # Construcción de URLs de logos
 ├── views/
-│ ├── dashboard_screen.dart # Pantalla principal (cards)
-│ ├── list_screen.dart # Listado genérico con estados
-│ └── detail_screen.dart # Detalle con información completa
-├── themes/ # (opcional) Estilos globales
-├── widgets/ # (opcional) Componentes reutilizables
-└── main.dart # Punto de entrada
+│   ├── dashboard_screen.dart    # Pantalla principal
+│   ├── estadisticas_screen.dart # Gráficas de accidentes
+│   ├── establecimiento_list_screen.dart   # Listado de establecimientos
+│   ├── establecimiento_detail_screen.dart # Detalle de establecimiento
+│   └── establecimiento_form_screen.dart    # Crear/Editar establecimiento
+├── themes/                      # (opcional) Estilos globales
+└── main.dart                    # Punto de entrada
+```
 
+### Capas principales
+
+- **`services/`** – Contiene la lógica de comunicación con ambas APIs usando `Dio`.
+- **`models/`** – Define las clases con `fromJson` para parsear respuestas.
+- **`views/`** – Pantallas de la interfaz de usuario, cada una con su propio `StatefulWidget`.
+- **`config/`** – Configuración de `go_router` con todas las rutas.
+- **`utils/`** – Funciones auxiliares (ej. construcción de URLs de imágenes).
 
 ### Manejo de estados
 
-Se utiliza `FutureBuilder` combinado con una **barra de estado visual** que muestra explícitamente:
+Se utiliza `FutureBuilder` y `setState` combinados con `Skeletonizer` para mostrar skeletons mientras cargan los datos. Cada pantalla maneja tres estados:
 
-- **Cargando** (naranja) → `CircularProgressIndicator`
-- **Éxito** (verde) → datos mostrados
-- **Error** (rojo) → mensaje de error + botón "Reintentar"
-
-Esto cumple con el requisito de evidenciar los tres estados en la interfaz.
+- **Cargando** → Skeleton o `CircularProgressIndicator`
+- **Éxito** → Datos mostrados (gráficas, listas, formularios)
+- **Error** → Mensaje de error + botón "Reintentar"
 
 ---
 
-##  Capturas de pantalla
-
-<img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/0b23ff13-dd1f-41fd-b8ee-46821c6a81b2" />
-<img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/bd8cf3c2-dc3e-4986-ab17-d39ef54beb58" />
-<img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/a2ee8659-40e7-4ad8-9c15-3ecadaf9e1f8" />
-<img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/fce5eeb5-1384-43f8-949d-ed7d0ee88e76" />
----
-
-## Rutas implementadas con `go_router`
+##  Rutas implementadas con `go_router`
 
 El archivo `lib/config/app_router.dart` define las siguientes rutas:
 
 | Ruta | Parámetros | Pantalla |
 |------|------------|----------|
 | `/` | – | `DashboardScreen` |
-| `/list/:endpoint` | `endpoint` (string) | `ListScreen` |
-| `/detail/:endpoint/:id` | `endpoint`, `id` (string) | `DetailScreen` |
+| `/estadisticas` | – | `EstadisticasScreen` |
+| `/establecimientos` | – | `EstablecimientoListScreen` |
+| `/establecimiento/crear` | – | `EstablecimientoFormScreen` (creación) |
+| `/establecimiento/editar/:id` | `id` (string) | `EstablecimientoFormScreen` (edición) |
+| `/establecimiento/:id` | `id` (string) | `EstablecimientoDetailScreen` |
 
-## Ejemplo de respuesta Json
-Endpoint: President (GET)
+### Ejemplo de navegación
+
+Desde el Dashboard:
+```dart
+context.pushNamed('estadisticas');
+context.pushNamed('establecimientos');
+```
+
+Desde el listado hacia el detalle:
+```dart
+context.pushNamed('establecimiento_detail', pathParameters: {'id': est.id.toString()});
+```
+
+Desde el detalle hacia la edición:
+```dart
+context.pushNamed('establecimiento_editar', pathParameters: {'id': widget.id});
+```
+
+---
+
+##  Capturas de pantalla
+<img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/39919475-fe7e-40fe-b580-e173ea4ce66b" /> <img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/bbb8ecd2-40d6-48c8-92a7-18e3c56eafa2" /> <img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/6719ba27-b476-4d1a-a80e-4a2126c19a01" /> <img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/ec455110-e085-4c05-9628-4b5431e312dc" /> <img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/ca220664-e001-4301-8441-de3e14d9e20c" /> <img width="720" height="1600" alt="imagen" src="https://github.com/user-attachments/assets/03877a18-1421-44b4-9a76-048658389fe6" />
+
+---
+
+##  Ejemplo de respuesta JSON
+
+### API Accidentes (GET)
+
+```json
+{
+  "clase_de_accidente": "CHOQUE",
+  "gravedad_del_accidente": "CON HERIDOS",
+  "barrio_hecho": "El Poblado",
+  "dia": "SÁBADO",
+  "hora": "18:30",
+  "area": "URBANA",
+  "clase_de_vehiculo": "AUTOMÓVIL"
+}
+```
+
+### API Establecimientos (GET /establecimientos/1)
+
+```json
 {
   "id": 1,
-  "name": "Simón Bolívar",
-  "politicalParty": "Independentista",
-  "period": "1819-1830",
-  "description": "Libertador de Colombia, Venezuela, Ecuador y Perú."
+  "nombre": "Parqueadero Centro",
+  "nit": "900123456-7",
+  "direccion": "Calle 10 # 5-20",
+  "telefono": "3101234567",
+  "logo": "storage/logos/logo123.png"
 }
-Documentación completa: Swagger API Colombia
-Esta rama contiene la versión en desarrollo de los talleres, con los últimos cambios integrados pero aún no promocionados a `main` (versión estable).
-
-
-## Descripción
-
-Repositorio personal para la asignatura **Desarrollo Móvil**, donde se almacenan los talleres, proyectos y ejercicios prácticos desarrollados en **Flutter** a lo largo del curso.
-
-Cada taller se organiza en ramas independientes siguiendo un flujo de trabajo profesional con Git: `main` para versiones estables, `dev` para integración y `feature/tallerX` para el desarrollo de cada actividad.
-
-**Cada rama de taller contiene su propio `README.md`** con la descripción detallada del taller, las capturas de pantalla de la aplicación funcionando y los pasos para ejecutarlo correctamente.
-
+```
