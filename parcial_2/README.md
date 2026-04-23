@@ -192,3 +192,5 @@ context.pushNamed('establecimiento_editar', pathParameters: {'id': widget.id});
   "logo": "storage/logos/logo123.png"
 }
 ```
+
+
