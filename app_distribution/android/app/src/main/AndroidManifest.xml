@@ -2,7 +2,7 @@
     <!-- Permiso de red requerido para Firebase App Distribution y conectividad general -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="app_distribution"
+        android:label="App Distribution - Javier"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
