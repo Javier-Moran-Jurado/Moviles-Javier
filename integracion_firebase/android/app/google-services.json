@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "707971490484",
+    "project_id": "integracion-firebase-f8fd8",
+    "storage_bucket": "integracion-firebase-f8fd8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707971490484:android:e1870fea8dc99f9cf8ede1",
+        "android_client_info": {
+          "package_name": "com.example.integracion_firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOSzC87rE9L3tY-gbvMt3IQCAWlUW9DLw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
